@@ -196,9 +196,10 @@ def create_indexer(want, result):
     if not module.check_mode:
         try:
             response = client.create_indexer(indexer_resource=want)
+        except prowlarr.ApiException as e:
+            module.fail_json('Error creating indexer: {}\n body: {}'.format(to_native(e.reason), to_native(e.body)), **result)
         except Exception as e:
-            module.fail_json('Error creating indexer: {}'.format(to_native(e.body)), **result)
-            module.fail_json('Error creating indexer: {}'.format(to_native(e.reason)), **result)
+            module.fail_json('Error creating indexer: {}'.format(to_native(e)), **result)
         result.update(response.model_dump(by_alias=False))
     module.exit_json(**result)
 

@@ -23,7 +23,7 @@ class FieldHelper():
         # type: (list) -> list[prowlarr.ContractField]
         fields = []
 
-        for field in field_list:
+        for field in field_list or []:
             fields.append(
                 prowlarr.ContractField(
                     name=field['name'],
