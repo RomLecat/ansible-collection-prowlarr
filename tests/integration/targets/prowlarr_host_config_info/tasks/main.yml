@@ -1,0 +1,13 @@
+---
+- name: Get host config
+  devopsarr.prowlarr.prowlarr_host_config_info:
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: result
+- name: Assert host config population
+  ansible.builtin.assert:
+    that:
+      - result.id == 1
+      - result.port is defined
+      - "'api_key' not in result.host_config"
+      - "'password' not in result.host_config"

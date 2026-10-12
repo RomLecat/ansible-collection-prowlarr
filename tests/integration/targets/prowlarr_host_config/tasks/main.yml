@@ -1,0 +1,55 @@
+---
+- name: Get current host config
+  devopsarr.prowlarr.prowlarr_host_config_info:
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: initial
+- name: Change history cleanup days
+  devopsarr.prowlarr.prowlarr_host_config:
+    history_cleanup_days: "{{ 31 if initial.history_cleanup_days != 31 else 32 }}"
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: result
+- name: Assert host config change
+  ansible.builtin.assert:
+    that:
+      - result.changed
+      - result.history_cleanup_days != initial.history_cleanup_days
+      - result.port == initial.port
+      - "'api_key' not in result"
+      - "'password' not in result"
+# ----------------------------------------------------------------------------
+- name: Set the same host config
+  devopsarr.prowlarr.prowlarr_host_config:
+    history_cleanup_days: "{{ result.history_cleanup_days }}"
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: same
+- name: Assert host config idempotency
+  ansible.builtin.assert:
+    that:
+      - same.changed == false
+# ----------------------------------------------------------------------------
+- name: Change host config in check mode
+  devopsarr.prowlarr.prowlarr_host_config:
+    history_cleanup_days: "{{ result.history_cleanup_days + 1 }}"
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  check_mode: true
+  register: checked
+- name: Assert check mode
+  ansible.builtin.assert:
+    that:
+      - checked.changed
+      - checked.history_cleanup_days == result.history_cleanup_days + 1
+# ----------------------------------------------------------------------------
+- name: Restore host config
+  devopsarr.prowlarr.prowlarr_host_config:
+    history_cleanup_days: "{{ initial.history_cleanup_days }}"
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: restored
+- name: Assert host config restore
+  ansible.builtin.assert:
+    that:
+      - restored.history_cleanup_days == initial.history_cleanup_days
