@@ -1,0 +1,53 @@
+---
+- name: Get current UI config
+  devopsarr.prowlarr.prowlarr_ui_config_info:
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: initial
+- name: Change first day of week
+  devopsarr.prowlarr.prowlarr_ui_config:
+    first_day_of_week: "{{ 1 if initial.first_day_of_week != 1 else 2 }}"
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: result
+- name: Assert UI config change
+  ansible.builtin.assert:
+    that:
+      - result.changed
+      - result.first_day_of_week != initial.first_day_of_week
+      - result.theme == initial.theme
+# ----------------------------------------------------------------------------
+- name: Set the same UI config
+  devopsarr.prowlarr.prowlarr_ui_config:
+    first_day_of_week: "{{ result.first_day_of_week }}"
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: same
+- name: Assert UI config idempotency
+  ansible.builtin.assert:
+    that:
+      - same.changed == false
+# ----------------------------------------------------------------------------
+- name: Change UI config in check mode
+  devopsarr.prowlarr.prowlarr_ui_config:
+    first_day_of_week: "{{ initial.first_day_of_week }}"
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  check_mode: true
+  register: checked
+- name: Assert check mode
+  ansible.builtin.assert:
+    that:
+      - checked.changed
+      - checked.first_day_of_week == initial.first_day_of_week
+# ----------------------------------------------------------------------------
+- name: Restore UI config
+  devopsarr.prowlarr.prowlarr_ui_config:
+    first_day_of_week: "{{ initial.first_day_of_week }}"
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: restored
+- name: Assert UI config restore
+  ansible.builtin.assert:
+    that:
+      - restored.first_day_of_week == initial.first_day_of_week

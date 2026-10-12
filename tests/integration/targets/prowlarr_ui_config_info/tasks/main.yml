@@ -1,0 +1,11 @@
+---
+- name: Get UI config
+  devopsarr.prowlarr.prowlarr_ui_config_info:
+    prowlarr_api_key: "{{ prowlarr_api_key }}"
+    prowlarr_url: "{{ prowlarr_url }}"
+  register: result
+- name: Assert UI config population
+  ansible.builtin.assert:
+    that:
+      - result.id == 1
+      - result.theme is defined
