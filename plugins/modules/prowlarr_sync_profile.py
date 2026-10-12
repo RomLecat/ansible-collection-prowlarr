@@ -98,6 +98,7 @@ tags:
 '''
 
 from ansible_collections.devopsarr.prowlarr.plugins.module_utils.prowlarr_module import ProwlarrModule
+from ansible_collections.devopsarr.prowlarr.plugins.module_utils.prowlarr_diff_utils import diff_create, diff_delete, diff_update
 from ansible.module_utils.common.text.converters import to_native
 
 try:
@@ -202,6 +203,8 @@ def run_module():
 
     # Delete the resource if needed.
     if module.params['state'] == 'absent':
+        if module._diff and state:
+            result['diff'] = diff_delete(state)
         delete_sync_profile(result)
 
     # Set wanted resource.
@@ -216,11 +219,15 @@ def run_module():
 
     # Create a new resource if needed.
     if result['id'] == 0:
+        if module._diff:
+            result['diff'] = diff_create(want)
         create_sync_profile(want, result)
 
     # Update an existing resource.
     want.id = result['id']
     if want != state:
+        if module._diff:
+            result['diff'] = diff_update(state, want)
         update_sync_profile(want, result)
 
     # Exit whith no changes.

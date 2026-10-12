@@ -58,6 +58,7 @@ label:
 '''
 
 from ansible_collections.devopsarr.prowlarr.plugins.module_utils.prowlarr_module import ProwlarrModule
+from ansible_collections.devopsarr.prowlarr.plugins.module_utils.prowlarr_diff_utils import diff_create, diff_delete, diff_update
 from ansible.module_utils.common.text.converters import to_native
 
 try:
@@ -142,11 +143,16 @@ def run_module():
 
     # Delete the resource if needed.
     if module.params['state'] == 'absent':
+        if module._diff and state:
+            result['diff'] = diff_delete(state)
         delete_tag(result)
 
     # Create a new resource.
     if result['id'] == 0:
-        create_tag({'label': module.params['label']}, result)
+        want = {'label': module.params['label']}
+        if module._diff:
+            result['diff'] = diff_create(want)
+        create_tag(want, result)
 
     # No need for update
     # Exit whith no changes.
